@@ -46,12 +46,3 @@ Java, Swing, Maven, JUnit 5, IntelliJ IDEA, Git/GitHub, macOS commands (`osascri
 
 ![System Diagram](docs/CS193_Proj.drawio-2.png)
 
-## Structure
-
-
-```
-docs/            Planning docs and diagram
-src/main/java/   App code
-src/test/java/   Tests
-pom.xml          Maven build file
-```
