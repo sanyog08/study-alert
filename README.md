@@ -32,11 +32,11 @@ git clone https://github.com/sanyog08/study-alert
 cd study-alert
 ```
 
-Build steps will be added once the first milestone is complete.
+Open the project in IntelliJ IDEA (JDK 26 or newer) and let it load the Maven project.
 
 ## Usage
 
-The app is in the planning stage. Run instructions will be added once the first working version is built.
+Run `Main.java` in `src/main/java/com/studyalert/`. A small Study Alert window opens. Alerts and the timer are not built yet.
 
 ## Planning
 
