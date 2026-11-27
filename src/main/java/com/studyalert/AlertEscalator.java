@@ -1,7 +1,13 @@
 package com.studyalert;
+
 public class AlertEscalator {
-    public static final int MAX_LEVEL = 4;
+    public static final int MAX_LEVEL = 5;
     private int level = 0;
+    private final Runnable showFullScreen;
+
+    public AlertEscalator(Runnable showFullScreen) {
+        this.showFullScreen = showFullScreen;
+    }
     public void escalate() {
         if (level < MAX_LEVEL) {
             level++;
@@ -16,9 +22,13 @@ public class AlertEscalator {
                 MacAlerts.playSound();
                 MacAlerts.dialog("You're still not studying. Go study now!");
             }
-            default -> {
+            case 4 -> {
                 MacAlerts.playSound();
                 MacAlerts.speak("Time to study. Stop scrolling and start studying.");
+            }
+            default -> {
+                MacAlerts.speak("Go study now.");
+                showFullScreen.run();
             }
         }
     }

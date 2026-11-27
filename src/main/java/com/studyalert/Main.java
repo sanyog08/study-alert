@@ -19,10 +19,11 @@ public class Main {
     private static final int SNOOZE_COOLDOWN_MINUTES = 60;
     private static StudyTimer timer;
     private static StudySchedule schedule;
-    private static final AlertEscalator escalator = new AlertEscalator();
+    private static final AlertEscalator escalator = new AlertEscalator(() -> FullScreenNag.show(Main::startStudying, Main::skipBlock));
     private static LocalDateTime lastAlertTime = null;
     private static LocalDateTime snoozeUntil = null;
     private static LocalDateTime lastSnoozeTime = null;
+    private static boolean skippedThisBlock = false;
     private static JLabel statusLabel;
 
     public static void main(String[] args) {
@@ -48,14 +49,7 @@ public class Main {
                     }
             );
             JButton startButton = new JButton("Start studying");
-            startButton.addActionListener(e -> {
-                MacAlerts.stopAll();
-                escalator.reset();
-                lastAlertTime = null;
-                snoozeUntil = null;
-                timer.start();
-                updateStatus();
-            });
+            startButton.addActionListener(e -> startStudying());
             frame.add(startButton);
             JButton pauseButton = new JButton("Pause");
             pauseButton.addActionListener(e -> timer.pause());
@@ -76,15 +70,33 @@ public class Main {
             frame.setVisible(true);
         });
     }
+    private static void startStudying() {
+        MacAlerts.stopAll();
+        FullScreenNag.hide();
+        escalator.reset();
+        lastAlertTime = null;
+        snoozeUntil = null;
+        timer.start();
+        updateStatus();
+    }
+    private static void skipBlock() {
+        MacAlerts.stopAll();
+        FullScreenNag.hide();
+        escalator.reset();
+        skippedThisBlock = true;
+        updateStatus();
+    }
     private static void checkSchedule() {
         LocalDateTime now = LocalDateTime.now();
+
         if (!schedule.isStudyTime(now)) {
             escalator.reset();
             lastAlertTime = null;
+            skippedThisBlock = false;
             updateStatus();
             return;
         }
-        if (timer.isRunning()) {
+        if (skippedThisBlock || timer.isRunning()) {
             return;
         }
         if (snoozeUntil != null && now.isBefore(snoozeUntil)) {
@@ -113,6 +125,10 @@ public class Main {
         updateStatus();
     }
     private static void updateStatus() {
-        statusLabel.setText("Alert level: " + escalator.getLevel() + " / " + AlertEscalator.MAX_LEVEL);
+        String text = "Alert level: " + escalator.getLevel() + " / " + AlertEscalator.MAX_LEVEL;
+        if (skippedThisBlock) {
+            text += " (skipped this block)";
+        }
+        statusLabel.setText(text);
     }
 }
