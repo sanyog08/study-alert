@@ -2,17 +2,33 @@ package com.studyalert;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
 
 public class Main {
+    private static final int CHECK_INTERVAL_MS = 60_000; // one minute
     private static StudyTimer timer;
+    private static StudySchedule schedule;
+    private static boolean alertedThisBlock = false;
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+            try {
+                schedule = StudySchedule.load(Path.of("settings.properties"));
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Could not read settings.properties:\n" + e.getMessage());
+                System.exit(1);
+            }
             JFrame frame = new JFrame("Study Alert");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setLayout(new FlowLayout());
+            frame.add(new JLabel(schedule.describe()));
             JLabel timeLabel = new JLabel("25:00");
             timeLabel.setFont(new Font("SansSerif", Font.BOLD, 36));
             frame.add(timeLabel);
@@ -32,21 +48,24 @@ public class Main {
             JButton resetButton = new JButton("Reset");
             resetButton.addActionListener(e -> timer.reset());
             frame.add(resetButton);
-            JButton bannerButton = new JButton("Test banner");
-            bannerButton.addActionListener(e -> MacAlerts.notify("Study Alert", "Time to study!"));
-            frame.add(bannerButton);
-            JButton soundButton = new JButton("Test sound");
-            soundButton.addActionListener(e -> MacAlerts.playSound());
-            frame.add(soundButton);
-            JButton dialogButton = new JButton("Test dialog");
-            dialogButton.addActionListener(e -> MacAlerts.dialog("Go study now!"));
-            frame.add(dialogButton);
-            JButton voiceButton = new JButton("Test voice");
-            voiceButton.addActionListener(e -> MacAlerts.speak("Time to study"));
-            frame.add(voiceButton);
-            frame.setSize(360, 240);
+            checkSchedule();
+            new Timer(CHECK_INTERVAL_MS, e -> checkSchedule()).start();
+            frame.setSize(360, 200);
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
         });
+    }
+    private static void checkSchedule() {
+        if (!schedule.isStudyTime(LocalDateTime.now())) {
+            alertedThisBlock = false;
+            return;
+        }
+        if (timer.isRunning()) {
+            return;
+        }
+        if (!alertedThisBlock) {
+            MacAlerts.notify("Study Alert", "Study time! Click Start studying.");
+            alertedThisBlock = true;
+        }
     }
 }
