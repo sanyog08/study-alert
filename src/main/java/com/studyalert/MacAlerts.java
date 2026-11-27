@@ -28,6 +28,7 @@ public class MacAlerts {
     }
     private static void run(String... command) {
         try {
+            activeAlerts.removeIf(alert -> !alert.isAlive());
             Process alert = new ProcessBuilder(command).start();
             activeAlerts.add(alert);
         } catch (IOException e) {
